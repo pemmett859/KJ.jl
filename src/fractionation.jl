@@ -17,7 +17,8 @@ fits sensitivity factors using internal standards.
 function fractionation!(fit::Gfit,
                         method::Gmethod,
                         run::Vector{Sample};
-                        verbose::Bool=false)
+                        verbose::Bool=false,
+                        limit = 1e4)
 
     # extract the grouped data for the SS function from the run
     cruncher_groups = Dict()
@@ -47,7 +48,7 @@ function fractionation!(fit::Gfit,
                             verbose=verbose)
 
     # fit the model
-    optimum = Optim.optimize(objective,init)
+    optimum = Optim.optimize(objective, init, Optim.Options(iterations = limit))
 
     if verbose
         println("Drift and downhole fractionation correction:\n")
