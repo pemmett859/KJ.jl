@@ -18,7 +18,7 @@ function fractionation!(fit::Gfit,
                         method::Gmethod,
                         run::Vector{Sample};
                         verbose::Bool=false,
-                        limit = 1e4)
+                        limit::Int64 = 10000)
 
     # extract the grouped data for the SS function from the run
     cruncher_groups = Dict()
