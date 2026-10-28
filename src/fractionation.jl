@@ -17,8 +17,9 @@ fits sensitivity factors using internal standards.
 function fractionation!(fit::Gfit,
                         method::Gmethod,
                         run::Vector{Sample};
-                        verbose::Bool=false,
-                        limit::Int64 = 10000)
+                        limit::Int64 = 10000,
+                        reject_outliers::Bool = false,
+                        verbose::Bool=false)
 
     # extract the grouped data for the SS function from the run
     cruncher_groups = Dict()
@@ -29,7 +30,8 @@ function fractionation!(fit::Gfit,
         ns = length(selection)
         crunchers = Vector{NamedTuple}(undef,ns)
         for i in eachindex(selection)
-            crunchers[i] = FCruncher(run[selection[i]],method,fit)
+            crunchers[i] = FCruncher(run[selection[i]],method,fit; 
+                reject_outliers = reject_outliers)
         end
         cruncher_groups[standard] = (anchor=anchor,crunchers=crunchers)
     end
@@ -141,9 +143,14 @@ prediction routines.
 """
 function FCruncher(samp::Sample,
                    method::Gmethod,
-                   fit::Gfit)
+                   fit::Gfit;
+                   reject_outliers::Bool=false)
 
     dat = swinData(samp)
+    if reject_outliers
+        good = .!dat.outlier
+        dat = dat[good,:]
+    end
     
     pm = dat[:,method.P.channel]
     Dm = dat[:,method.D.channel]
@@ -171,7 +178,7 @@ function FCruncher(samp::Sample,
     Delement = channel2element(method.D.ion)
     if haskey(fit.bias,Delement)
         mf = bias_correction(fit.bias[Delement],
-                             method.d.ion,method.D.ion,t)
+                             method.d.channel,method.D.channel,t)
     else
         mf = ones(length(t))
     end
